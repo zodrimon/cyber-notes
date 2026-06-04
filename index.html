@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cyber Notes | Rimon</title>
+  <title>Cyber Writeups | Rimon</title>
 
   <style>
     body {
@@ -16,13 +17,13 @@
 
     header {
       background: linear-gradient(135deg, #111827, #020617);
-      padding: 60px 20px;
+      padding: 70px 20px;
       text-align: center;
       border-bottom: 1px solid #30363d;
     }
 
     header h1 {
-      font-size: 42px;
+      font-size: 44px;
       margin-bottom: 10px;
       color: #58a6ff;
     }
@@ -30,7 +31,7 @@
     header p {
       font-size: 18px;
       color: #8b949e;
-      max-width: 700px;
+      max-width: 850px;
       margin: auto;
     }
 
@@ -39,6 +40,9 @@
       padding: 15px;
       text-align: center;
       border-bottom: 1px solid #30363d;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     nav a {
@@ -53,7 +57,7 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: auto;
       padding: 40px 20px;
     }
@@ -64,10 +68,18 @@
       font-size: 28px;
     }
 
+    .intro-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 40px;
+    }
+
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
     }
 
     .card {
@@ -110,12 +122,12 @@
       margin: 5px 5px 5px 0;
     }
 
-    .about {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 25px;
-      margin-top: 40px;
+    .warning {
+      background: #1f2937;
+      border-left: 4px solid #58a6ff;
+      padding: 18px;
+      border-radius: 8px;
+      margin-top: 35px;
     }
 
     footer {
@@ -131,82 +143,141 @@
 <body>
 
   <header>
-    <h1>Cyber Notes</h1>
-    <p>My cybersecurity learning blog for TryHackMe, Hack The Box, Windows Privilege Escalation, Active Directory, Red Teaming, and CRTA preparation.</p>
+    <h1>Cyber Writeups & Notes</h1>
+    <p>
+      A public collection of my cybersecurity writeups, TryHackMe notes, Hack The Box practice,
+      privilege escalation lessons, Active Directory learning, and CRTA preparation notes.
+    </p>
   </header>
 
   <nav>
-    <a href="#notes">Notes</a>
-    <a href="#categories">Categories</a>
-    <a href="#about">About</a>
+    <a href="#latest">Latest</a>
+    <a href="#domains">Domains</a>
+    <a href="#purpose">Purpose</a>
+    <a href="#rules">Rules</a>
   </nav>
 
   <main class="container">
 
-    <section id="notes">
-      <h2 class="section-title">Latest Notes</h2>
+    <section id="purpose" class="intro-box">
+      <h2 class="section-title">Purpose of This Site</h2>
+      <p>
+        This site is my personal cybersecurity learning archive and public writeup library.
+        I write notes from TryHackMe boxes, Hack The Box machines, CTF practice, cybersecurity resources,
+        and my own lab work.
+      </p>
+
+      <p>
+        My goal is to help the community, document my learning journey, and build a revision library
+        that I can use later for CRTA preparation, red team practice, Active Directory labs, and privilege escalation review.
+      </p>
+    </section>
+
+    <section id="latest">
+      <h2 class="section-title">Latest Writeups</h2>
 
       <div class="card-grid">
         <div class="card">
           <h3>Windows Privilege Escalation Notes</h3>
-          <p>My learning notes on Windows enumeration, users, groups, privileges, services, permissions, and privilege escalation methodology.</p>
+          <p>
+            Notes from my Windows privilege escalation practice, including enumeration,
+            Powershell history, IIS web.config files, saved credentials, runas, cmdkey,
+            and PuTTY saved sessions.
+          </p>
+
           <span class="badge">TryHackMe</span>
           <span class="badge">Windows</span>
           <span class="badge">Privilege Escalation</span>
+
           <br>
-          <a href="./tryhackme/windows/windows-privilege-escalation.html">Read Note →</a>
+          <a href="./tryhackme/windows/windows-privilege-escalation.html">Read Writeup →</a>
         </div>
       </div>
     </section>
 
-    <section id="categories">
-      <h2 class="section-title">Categories</h2>
+    <section id="domains">
+      <h2 class="section-title">Writeup Domains</h2>
 
       <div class="card-grid">
+
         <div class="card">
           <h3>Windows Privilege Escalation</h3>
-          <p>Enumeration, services, permissions, stored credentials, UAC, and misconfigurations.</p>
+          <p>
+            Writeups and notes about Windows enumeration, users, groups, privileges,
+            services, saved credentials, registry, UAC, and misconfigurations.
+          </p>
+          <span class="badge">1 Post</span>
         </div>
 
         <div class="card">
           <h3>Linux Privilege Escalation</h3>
-          <p>Coming soon: SUID, cron jobs, PATH abuse, sudo permissions, kernel exploits, and enumeration.</p>
+          <p>
+            Coming soon: SUID binaries, sudo permissions, cron jobs, PATH abuse,
+            writable files, kernel exploits, and manual enumeration.
+          </p>
+          <span class="badge">Coming Soon</span>
         </div>
 
         <div class="card">
           <h3>Active Directory</h3>
-          <p>Coming soon: Kerberos, SMB, LDAP, BloodHound, Kerberoasting, AS-REP roasting, and lateral movement.</p>
+          <p>
+            Coming soon: SMB, LDAP, Kerberos, BloodHound, AS-REP roasting,
+            Kerberoasting, lateral movement, and domain privilege escalation.
+          </p>
+          <span class="badge">Coming Soon</span>
+        </div>
+
+        <div class="card">
+          <h3>Web Security</h3>
+          <p>
+            Coming soon: SQL injection, file upload, IDOR, authentication bypass,
+            command injection, and web enumeration.
+          </p>
+          <span class="badge">Coming Soon</span>
+        </div>
+
+        <div class="card">
+          <h3>Networking & Enumeration</h3>
+          <p>
+            Coming soon: Nmap, SMB, FTP, DNS, HTTP, service enumeration,
+            port scanning, and methodology notes.
+          </p>
+          <span class="badge">Coming Soon</span>
         </div>
 
         <div class="card">
           <h3>CRTA Preparation</h3>
-          <p>Coming soon: Red team methodology, Active Directory attack paths, tools, and lab notes.</p>
+          <p>
+            Coming soon: red team fundamentals, Active Directory attack paths,
+            tools, labs, mistakes, and exam preparation notes.
+          </p>
+          <span class="badge">Coming Soon</span>
         </div>
+
       </div>
     </section>
 
-    <section id="about" class="about">
-      <h2 class="section-title">About This Site</h2>
+    <section id="rules" class="warning">
+      <h2 class="section-title">Writeup Rules</h2>
 
       <p>
-        These are my personal cybersecurity learning notes written in my own words.
-        I use this site to document my journey in ethical hacking, red teaming, TryHackMe, Hack The Box, and CRTA preparation.
+        I publish learning-focused writeups only. I do not publish flags, direct answers,
+        private-room solutions, copied premium content, machine-specific passwords,
+        or anything that ruins the learning experience for others.
       </p>
 
       <p>
-        I do not publish flags, direct answers, private-room solutions, copied premium content, machine-specific passwords, or anything that ruins the learning experience for others.
-      </p>
-
-      <p>
-        The goal is simple: learn deeply, document clearly, and help beginners understand cybersecurity concepts safely.
+        My notes focus on concepts, methodology, commands, mistakes, lessons learned,
+        and safe explanations that can help beginners understand cybersecurity properly.
       </p>
     </section>
 
   </main>
 
   <footer>
-    <p>© 2026 Cyber Notes by Rimon | Built with GitHub Pages</p>
+    <p>© 2026 Cyber Writeups by Rimon | Built with GitHub Pages</p>
   </footer>
 
 </body>
 </html>
+```
