@@ -95,6 +95,14 @@
       border-color: #58a6ff;
     }
 
+    .clickable-card {
+  cursor: pointer;
+}
+
+.clickable-card:hover h3 {
+  color: #58a6ff;
+}
+
     .card h3 {
       margin-top: 0;
       color: #ffffff;
@@ -200,15 +208,26 @@
 
       <div class="card-grid">
 
-        <div class="card">
-          <h3>Windows Privilege Escalation</h3>
-          <p>
-            Writeups and notes about Windows enumeration, users, groups, privileges,
-            services, saved credentials, registry, UAC, and misconfigurations.
-          </p>
-          <span class="badge">1 Post</span>
-        </div>
 
+
+
+
+
+        
+
+    <div class="card clickable-card" onclick="window.location.href='./windows-privilege-escalation.html'">              
+  <h3>Windows Privilege Escalation</h3>
+  <p>
+    Writeups and notes about Windows enumeration, users, groups, privileges,
+    services, saved credentials, registry, UAC, and misconfigurations.
+  </p>
+  <span class="badge">1 Post</span>
+</div>
+
+
+
+
+        
         <div class="card">
           <h3>Linux Privilege Escalation</h3>
           <p>
