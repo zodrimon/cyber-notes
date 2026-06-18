@@ -1,1 +1,266 @@
+# Linux Privilege Escalation - Enumeration
+
+## Initial Access
+
+Connected to the machine using SSH:
+
+```bash
+ssh john@TARGET_IP
+```
+
+Credentials:
+
+```text
+Username: john
+Password: john
+```
+
+---
+
+# Task 3 - OS Enumeration
+
+### What is OS Enumeration?
+
+Collecting information about the operating system, kernel, processes, cron jobs and installed software before attempting privilege escalation.
+
+### Important Commands
+
+```bash
+hostname
+```
+
+Shows hostname of the target.
+
+```bash
+uname -a
+```
+
+Shows kernel version and architecture.
+
+```bash
+cat /proc/version
+```
+
+Shows detailed kernel build information.
+
+```bash
+cat /etc/issue
+```
+
+Shows Linux distribution version.
+
+```bash
+ps aux
+```
+
+Shows all running processes.
+
+```bash
+ps axjf
+```
+
+Shows processes in tree format.
+
+```bash
+cat /etc/crontab
+```
+
+Checks scheduled cron jobs.
+
+```bash
+dpkg -l
+```
+
+Lists installed software packages.
+
+---
+
+# Task 4 - User Enumeration
+
+### What is User Enumeration?
+
+Collecting information about users, groups, environment variables, command history and sudo permissions.
+
+### Important Commands
+
+```bash
+id
+```
+
+Shows current user information and groups.
+
+```bash
+id username
+```
+
+Shows information about another user.
+
+```bash
+env
+```
+
+Displays environment variables.
+
+```bash
+history
+```
+
+Displays previously executed commands.
+
+```bash
+sudo -l
+```
+
+Checks commands allowed with sudo.
+
+```bash
+cat /etc/passwd
+```
+
+Lists all users.
+
+```bash
+cat /etc/passwd | cut -d ":" -f1
+```
+
+Lists usernames only.
+
+```bash
+cat /etc/passwd | grep /home
+```
+
+Shows real users with home directories.
+
+---
+
+# Task 5 - Network Enumeration
+
+### Important Commands
+
+```bash
+ifconfig
+```
+
+View network interfaces.
+
+Modern alternative:
+
+```bash
+ip addr
+```
+
+---
+
+```bash
+netstat -a
+```
+
+All connections.
+
+```bash
+netstat -at
+```
+
+TCP connections.
+
+```bash
+netstat -au
+```
+
+UDP connections.
+
+```bash
+netstat -lt
+```
+
+Listening TCP ports.
+
+```bash
+netstat -tp
+```
+
+Connections with process information.
+
+```bash
+netstat -tpln
+```
+
+Listening services + PID.
+
+```bash
+netstat -i
+```
+
+Interface statistics.
+
+```bash
+netstat -ano
+```
+
+Most commonly used netstat command.
+
+---
+
+# Task 6 - File Enumeration
+
+### What I Need To Remember
+
+If the hint contains a word like:
+
+```text
+flag
+password
+backup
+secret
+tryhackme
+```
+
+Search the current folder first:
+
+```bash
+find . -name "*flag*"
+```
+
+Search the whole system:
+
+```bash
+find / -name "*flag*" 2>/dev/null
+```
+
+Examples:
+
+```bash
+find . -name "*password*"
+find / -name "*password*" 2>/dev/null
+```
+
+Use grep when searching file contents:
+
+```bash
+grep -Ri "password" / 2>/dev/null
+```
+
+```bash
+grep -Ri "tryhackme" / 2>/dev/null
+```
+
+### Hidden Files
+
+Always use:
+
+```bash
+ls -la
+```
+
+Normal ls may miss hidden files.
+
+### Very Important
+
+Check SUID files:
+
+```bash
+find / -perm -u=s -type f 2>/dev/null
+```
+
+SUID binaries are one of the most common Linux privilege escalation vectors.
 
